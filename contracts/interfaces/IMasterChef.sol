@@ -1,7 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
+
 import "../libraries/BoringERC20.sol";
+
+interface IRewarder {
+    function onVoltReward(address user, uint256 newLpAmount) external;
+
+    function pendingTokens(address user) external view returns (uint256 pending);
+
+    function rewardToken() external view returns (IERC20);
+}
 
 interface IMasterChef {
     using BoringERC20 for IERC20;
@@ -15,6 +24,7 @@ interface IMasterChef {
         uint256 allocPoint; // How many allocation points assigned to this pool. JOE to distribute per block.
         uint256 lastRewardTimestamp; // Last block number that JOE distribution occurs.
         uint256 accJoePerShare; // Accumulated JOE per share, times 1e12. See below.
+        IRewarder rewarder;
     }
 
     function poolInfo(uint256 pid) external view returns (IMasterChef.PoolInfo memory);
@@ -28,4 +38,6 @@ interface IMasterChef {
     function treasuryPercent() external view returns (uint256);
 
     function investorPercent() external view returns (uint256);
+
+    function poolLength() external view returns (uint256);
 }
