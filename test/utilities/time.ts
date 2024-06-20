@@ -1,5 +1,6 @@
 const { ethers } = require("hardhat")
-
+import { BN } from "./math";
+import { Block } from "@ethersproject/abstract-provider";
 const { BigNumber } = ethers
 
 export async function advanceBlock() {
@@ -17,6 +18,28 @@ export async function increase(value) {
   await advanceBlock()
 }
 
+export const increaseTime = async (length: BN | number): Promise<void> => {
+  await ethers.provider.send("evm_increaseTime", [BN.from(length).toNumber()]);
+  await advanceBlock();
+};
+
+export const latestBlock = async (): Promise<Block> =>
+  ethers.provider.getBlock(await ethers.provider.getBlockNumber());
+
+export const getTimestamp = async (): Promise<BN> =>
+  BN.from((await latestBlock()).timestamp);
+
+export const increaseTimeTo = async (target: BN | number): Promise<void> => {
+  const now = await getTimestamp();
+  const later = BN.from(target);
+  if (later.lt(now))
+    throw Error(
+      `Cannot increase current time (${now.toNumber()}) to a moment in the past (${later.toNumber()})`
+    );
+  const diff = later.sub(now);
+  await increaseTime(diff);
+};
+
 export async function latest() {
   const block = await ethers.provider.getBlock("latest")
   return BigNumber.from(block.timestamp)
@@ -30,6 +53,16 @@ export async function advanceTimeAndBlock(time) {
 export async function advanceTime(time) {
   await ethers.provider.send("evm_increaseTime", [time])
 }
+
+export async function takeSnapshot() {
+  const snapshotId: string = await ethers.provider.send("evm_snapshot", []);
+  return snapshotId;
+}
+
+export async function revertToSnapShot(id: string) {
+  await ethers.provider.send("evm_revert", [id]);
+}
+
 
 export const duration = {
   seconds: function (val) {

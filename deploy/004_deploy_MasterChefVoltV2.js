@@ -5,7 +5,8 @@ module.exports = async function ({ ethers, deployments, getNamedAccounts }) {
 
   const volt = await ethers.getContract("VoltToken");
 
-  const multiSig = '0x03709784c96aeaAa9Dd38Df14A23e996681b2C66'
+  // const multiSig = '0x03709784c96aeaAa9Dd38Df14A23e996681b2C66'
+  const multiSig = deployer
 
   const { address } = await deploy("MasterChefVoltV2", {
     from: deployer,

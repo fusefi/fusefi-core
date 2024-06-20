@@ -1,5 +1,8 @@
-import { ethers } from "hardhat"
+// import { ethers } from "hardhat"
+// import hardhat from "hardhat"
+const hardhat = require("hardhat")
 const { BigNumber } = require("ethers")
+const { ethers } = hardhat
 
 export const BASE_TEN = 10
 export const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000"
@@ -47,6 +50,40 @@ export async function createSLP(thisObject, name, tokenA, tokenB, amount) {
 // Defaults to e18 using amount * 10^18
 export function getBigNumber(amount, decimals = 18) {
   return BigNumber.from(amount).mul(BigNumber.from(BASE_TEN).pow(decimals))
+}
+
+/**
+ * Sets default properties on the jsonrpc object and promisifies it so we don't have to copy/paste everywhere.
+ */
+export const send = (payload: any): Promise<any> => {
+  if (!payload.jsonrpc) payload.jsonrpc = "2.0"
+  if (!payload.id) payload.id = new Date().getTime()
+
+  return hardhat.network.provider.send(payload.method, payload.params)
+}
+
+/**
+ *  Mines a single block in Ganache (evm_mine is non-standard)
+ */
+export const mineBlock = () => send({ method: "evm_mine" })
+
+export const takeSnapshot = async () => {
+  const result = await send({ method: "evm_snapshot" })
+  await mineBlock()
+
+  return result
+}
+
+/**
+ *  Restores a snapshot that was previously taken with takeSnapshot
+ *  @param id The ID that was returned when takeSnapshot was called.
+ */
+export const restoreSnapshot = async (id: string) => {
+  await send({
+    method: "evm_revert",
+    params: [id],
+  })
+  await mineBlock()
 }
 
 export * from "./time"
